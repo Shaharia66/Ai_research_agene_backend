@@ -103,7 +103,7 @@ def node_research(state: ResearchState) -> ResearchState:
         "For each write 2-3 paragraphs with specific facts, statistics, and real examples.\n\n"
         f"Subtopics:\n{state['subtopics']}"
     )
-    return {**state, "research": research, "current_step": 2, "step_message": "Deep research complete"}
+    return {**state, "do_research": research, "current_step": 2, "step_message": "Deep research complete"}
 
 
 def node_analyze(state: ResearchState) -> ResearchState:
@@ -143,7 +143,7 @@ def node_retry(state: ResearchState) -> ResearchState:
     return {
         **state,
         "retry_count": state["retry_count"] + 1,
-        "research": "",
+        "do_research": "",
         "insights": "",
         "quality_score": 0,
         "step_message": f"Quality low — retrying (attempt {state['retry_count'] + 2})",
@@ -265,16 +265,16 @@ def _fallback_report(topic: str, date: str, insights: str) -> dict:
 def build_graph():
     g = StateGraph(ResearchState)
     g.add_node("plan",     node_plan)
-    g.add_node("research", node_research)
+    g.add_node("do_research", node_research)
     g.add_node("analyze",  node_analyze)
     g.add_node("retry",    node_retry)
     g.add_node("write",    node_write)
     g.add_node("finalize", node_finalize)
     g.set_entry_point("plan")
-    g.add_edge("plan",     "research")
-    g.add_edge("research", "analyze")
+    g.add_edge("plan",     "do_research")
+    g.add_edge("do_research", "analyze")
     g.add_conditional_edges("analyze", node_quality_gate, {"retry": "retry", "write": "write"})
-    g.add_edge("retry",    "research")
+    g.add_edge("retry",    "do_research")
     g.add_edge("write",    "finalize")
     g.add_edge("finalize", END)
     return g.compile()
@@ -300,7 +300,7 @@ async def research_stream(topic: str):
         initial_state: ResearchState = {
             "topic": topic,
             "subtopics": "",
-            "research": "",
+            "do_research": "",
             "insights": "",
             "report": None,
             "quality_score": 0,
@@ -340,7 +340,7 @@ async def research_stream(topic: str):
                 async for chunk in send(2, "active", {"message": "Domain Researcher agent gathering data..."}):
                     yield chunk
 
-            elif node_name == "research" and 2 not in step_announced:
+            elif node_name == "do_research" and 2 not in step_announced:
                 step_announced.add(2)
                 async for chunk in send(2, "done", {"message": message}):
                     yield chunk
