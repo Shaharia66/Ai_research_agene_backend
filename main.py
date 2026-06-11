@@ -103,7 +103,7 @@ def node_research(state: ResearchState) -> ResearchState:
         "For each write 2-3 paragraphs with specific facts, statistics, and real examples.\n\n"
         f"Subtopics:\n{state['subtopics']}"
     )
-    return {**state, "do_research": research, "current_step": 2, "step_message": "Deep research complete"}
+    return {**state, "research": research, "current_step": 2, "step_message": "Deep research complete"}
 
 
 def node_analyze(state: ResearchState) -> ResearchState:
@@ -143,7 +143,7 @@ def node_retry(state: ResearchState) -> ResearchState:
     return {
         **state,
         "retry_count": state["retry_count"] + 1,
-        "do_research": "",
+        "research": "",
         "insights": "",
         "quality_score": 0,
         "step_message": f"Quality low — retrying (attempt {state['retry_count'] + 2})",
@@ -300,7 +300,7 @@ async def research_stream(topic: str):
         initial_state: ResearchState = {
             "topic": topic,
             "subtopics": "",
-            "do_research": "",
+            "research": "",
             "insights": "",
             "report": None,
             "quality_score": 0,
